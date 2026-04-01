@@ -1,0 +1,42 @@
+[
+    {
+        "id": 1,
+        "text": "Objednat brzdové hadice na Sportster",
+        "dateTime": "2026-04-02T09:00:00",
+        "url": "",
+        "done": false,
+        "createdAt": "2026-04-01T09:00:00Z"
+    },
+    {
+        "id": 2,
+        "text": "Koupit brzdovou kapalinu DOT 5",
+        "dateTime": "2026-04-02T09:00:00",
+        "url": "",
+        "done": false,
+        "createdAt": "2026-04-01T09:00:00Z"
+    },
+    {
+        "id": 3,
+        "text": "CLAUDE USAGE SE RESETUJE",
+        "dateTime": "2026-04-01T19:00:00",
+        "url": "",
+        "done": false,
+        "createdAt": "2026-04-01T15:37:00Z"
+    },
+    {
+        "id": 4,
+        "text": "Vibecoding article",
+        "dateTime": "2026-03-30T20:00:00",
+        "url": "https://www.vibecoding.cz/articles/ostatni/proc-ai-generuje-stale-stejny-design-a-jak-to-ve-vasem-projektu-zmenit/",
+        "done": true,
+        "createdAt": "2026-03-30T13:35:00Z"
+    },
+    {
+        "id": 5,
+        "text": "LeetLLM tweet",
+        "dateTime": "2026-03-30T17:30:00",
+        "url": "https://x.com/leetllm/status/2038479622334021909",
+        "done": true,
+        "createdAt": "2026-03-30T10:00:00Z"
+    }
+]

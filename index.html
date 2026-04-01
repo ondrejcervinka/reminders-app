@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reminders - Ondrej</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔔 Reminders</h1>
+            <div class="view-toggle">
+                <button id="calendarViewBtn" class="active">📅 Kalendář</button>
+                <button id="listViewBtn">📋 Seznam</button>
+            </div>
+        </header>
+
+        <div class="stats" id="stats">
+            <span id="totalCount">0</span> reminderů · 
+            <span id="todayCount">0</span> dnes · 
+            <span id="upcomingCount">0</span> tento týden
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarView" class="calendar-view">
+            <div class="calendar-header">
+                <button id="prevMonth">←</button>
+                <h2 id="currentMonth"></h2>
+                <button id="nextMonth">→</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="day-header">Po</div>
+                <div class="day-header">Út</div>
+                <div class="day-header">St</div>
+                <div class="day-header">Čt</div>
+                <div class="day-header">Pá</div>
+                <div class="day-header">So</div>
+                <div class="day-header">Ne</div>
+            </div>
+            <div class="calendar-days" id="calendarDays"></div>
+        </div>
+
+        <!-- List View -->
+        <div id="listView" class="list-view hidden">
+            <div class="filter-bar">
+                <select id="statusFilter">
+                    <option value="all">Všechny</option>
+                    <option value="pending">Čekající</option>
+                    <option value="done">Hotové</option>
+                </select>
+                <select id="dateFilter">
+                    <option value="all">Všechny datumy</option>
+                    <option value="today">Dnes</option>
+                    <option value="week">Tento týden</option>
+                    <option value="month">Tento měsíc</option>
+                </select>
+            </div>
+            <div id="remindersList"></div>
+        </div>
+
+        <!-- Add Reminder Form -->
+        <div class="add-form">
+            <h3>➕ Přidat reminder</h3>
+            <form id="addReminderForm">
+                <input type="text" id="reminderText" placeholder="Text reminderu..." required>
+                <input type="datetime-local" id="reminderDate" required>
+                <input type="url" id="reminderUrl" placeholder="URL (volitelné)">
+                <button type="submit">Přidat</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

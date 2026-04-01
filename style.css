@@ -1,0 +1,375 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    min-height: 100vh;
+    color: #fff;
+    padding: 20px;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    transition: all 0.3s;
+}
+
+.view-toggle button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.view-toggle button.active {
+    background: #4CAF50;
+}
+
+.stats {
+    background: rgba(255,255,255,0.1);
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+}
+
+.stats span {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* Calendar View */
+.calendar-view {
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-header button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.calendar-header button:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 5px;
+}
+
+.day-header {
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 5px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    overflow: hidden;
+}
+
+.calendar-day:hover {
+    background: rgba(255,255,255,0.15);
+    transform: scale(1.05);
+}
+
+.calendar-day.other-month {
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    background: rgba(76, 175, 80, 0.3);
+    border: 2px solid #4CAF50;
+}
+
+.calendar-day.has-reminders {
+    background: rgba(255, 193, 7, 0.2);
+}
+
+.calendar-day .day-number {
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+
+.calendar-day .reminder-dots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    justify-content: center;
+}
+
+.reminder-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FFC107;
+}
+
+.reminder-dot.done {
+    background: #4CAF50;
+}
+
+/* List View */
+.list-view {
+    margin-bottom: 20px;
+}
+
+.list-view.hidden {
+    display: none;
+}
+
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-bar select {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.filter-bar select option {
+    background: #1a1a2e;
+}
+
+#remindersList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.reminder-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.2s;
+}
+
+.reminder-card:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+.reminder-card.done {
+    opacity: 0.6;
+}
+
+.reminder-info {
+    flex: 1;
+}
+
+.reminder-text {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.reminder-card.done .reminder-text {
+    text-decoration: line-through;
+}
+
+.reminder-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.reminder-url {
+    color: #4FC3F7;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.reminder-url:hover {
+    text-decoration: underline;
+}
+
+.reminder-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.reminder-actions button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-done {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.btn-done:hover {
+    background: #4CAF50;
+    color: #fff;
+}
+
+.btn-delete {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+.btn-delete:hover {
+    background: #f44336;
+    color: #fff;
+}
+
+/* Add Form */
+.add-form {
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.add-form h3 {
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+#addReminderForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#addReminderForm input {
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 1rem;
+}
+
+#addReminderForm input::placeholder {
+    color: #888;
+}
+
+#addReminderForm input:focus {
+    outline: none;
+    background: rgba(255,255,255,0.15);
+}
+
+#addReminderForm button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #4CAF50;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#addReminderForm button:hover {
+    background: #45a049;
+    transform: scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .calendar-day {
+        font-size: 0.75rem;
+    }
+    
+    .reminder-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+.empty-state h3 {
+    margin-bottom: 10px;
+    color: #666;
+}
