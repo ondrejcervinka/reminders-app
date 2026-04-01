@@ -4,18 +4,24 @@ let currentMonth = new Date();
 
 // Load reminders
 async function loadReminders() {
+    let loadedFromServer = false;
+    
     try {
         const response = await fetch('reminders.json');
         if (response.ok) {
             reminders = await response.json();
+            loadedFromServer = true;
         }
     } catch (e) {
         console.log('Using localStorage');
     }
     
-    const stored = localStorage.getItem('reminders_v2');
-    if (stored) {
-        reminders = JSON.parse(stored);
+    // Only use localStorage as fallback
+    if (!loadedFromServer) {
+        const stored = localStorage.getItem('reminders_v2');
+        if (stored) {
+            reminders = JSON.parse(stored);
+        }
     }
     
     render();
