@@ -45,8 +45,6 @@ function addReminder(text, url = '', dateTime = '') {
     
     saveReminders();
     render();
-    
-    // Return the reminder for GitHub sync
     return reminder;
 }
 
@@ -66,15 +64,9 @@ function toggleDone(id) {
 }
 
 function render() {
-    renderStats();
     renderCalendar();
-    renderList();
-}
-
-function renderStats() {
-    const pending = reminders.filter(r => !r.done).length;
-    document.getElementById('pendingCount').textContent = pending;
-    document.getElementById('totalCount').textContent = reminders.length;
+    renderRemindersWithDate();
+    renderReadLater();
 }
 
 function renderCalendar() {
@@ -141,95 +133,87 @@ function renderCalendar() {
     document.getElementById('calendarDays').innerHTML = html;
 }
 
-function renderList() {
+function renderRemindersWithDate() {
     const showPending = document.getElementById('showOnlyPending').checked;
     
-    // Sort: with date first (ascending), without date at end
-    let sorted = [...reminders].sort((a, b) => {
-        if (!a.dateTime && !b.dateTime) return 0;
-        if (!a.dateTime) return 1;
-        if (!b.dateTime) return -1;
-        return new Date(a.dateTime) - new Date(b.dateTime);
-    });
-    
+    let filtered = reminders.filter(r => r.dateTime);
     if (showPending) {
-        sorted = sorted.filter(r => !r.done);
+        filtered = filtered.filter(r => !r.done);
     }
     
-    if (sorted.length === 0) {
+    // Sort by date ascending
+    filtered.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    
+    if (filtered.length === 0) {
         document.getElementById('remindersList').innerHTML = `
             <div class="empty-state">
-                <h3>📭 Žádné položky</h3>
-                <p>Použij <code>/r</code> v Telegramu pro přidání</p>
+                <h3>📅 Žádné úkoly</h3>
             </div>
         `;
         return;
     }
     
-    const html = sorted.map(r => {
-        const hasDate = r.dateTime;
-        let dateStr = '';
-        let timeStr = '';
-        
-        if (hasDate) {
-            const date = new Date(r.dateTime);
-            dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
-            timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-        }
-        
-        return `
-            <div class="reminder-card ${r.done ? 'done' : ''}">
-                <div class="reminder-info">
-                    <div class="reminder-text">${escapeHtml(r.text)}</div>
-                    <div class="reminder-meta">
-                        ${hasDate ? `<span>📅 ${dateStr} ${timeStr}</span>` : '<span>📌 K přečtení</span>'}
-                        ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">🔗 Odkaz</a>` : ''}
-                    </div>
-                </div>
-                <div class="reminder-actions">
-                    <button class="btn-done" onclick="toggleDone(${r.id})">${r.done ? '↩️' : '✅'}</button>
-                    <button class="btn-delete" onclick="deleteReminder(${r.id})">🗑️</button>
-                </div>
+    const html = filtered.map(r => createReminderCard(r)).join('');
+    document.getElementById('remindersList').innerHTML = `<div class="column-content">${html}</div>`;
+}
+
+function renderReadLater() {
+    const showPending = document.getElementById('showOnlyPending').checked;
+    
+    let filtered = reminders.filter(r => !r.dateTime);
+    if (showPending) {
+        filtered = filtered.filter(r => !r.done);
+    }
+    
+    // Sort by created desc (newest first)
+    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    if (filtered.length === 0) {
+        document.getElementById('readLaterList').innerHTML = `
+            <div class="empty-state">
+                <h3>📌 Nic k přečtení</h3>
             </div>
         `;
-    }).join('');
+        return;
+    }
     
-    document.getElementById('remindersList').innerHTML = html;
+    const html = filtered.map(r => createReminderCard(r)).join('');
+    document.getElementById('readLaterList').innerHTML = `<div class="column-content">${html}</div>`;
+}
+
+function createReminderCard(r) {
+    const hasDate = r.dateTime;
+    let dateStr = '';
+    let timeStr = '';
+    let label = '📌';
+    
+    if (hasDate) {
+        const date = new Date(r.dateTime);
+        dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+        timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+        label = '📅';
+    }
+    
+    return `
+        <div class="reminder-card ${r.done ? 'done' : ''}">
+            <div class="reminder-info">
+                <div class="reminder-text">${escapeHtml(r.text)}</div>
+                <div class="reminder-meta">
+                    ${hasDate ? `<span>${label} ${dateStr} ${timeStr}</span>` : ''}
+                    ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">🔗</a>` : ''}
+                </div>
+            </div>
+            <div class="reminder-actions">
+                <button class="btn-done" onclick="toggleDone(${r.id})">${r.done ? '↩️' : '✅'}</button>
+                <button class="btn-delete" onclick="deleteReminder(${r.id})">🗑️</button>
+            </div>
+        </div>
+    `;
 }
 
 function showDayReminders(dateStr) {
-    const showPending = document.getElementById('showOnlyPending').checked;
-    
-    const dayReminders = reminders.filter(r => {
-        if (!r.dateTime || r.dateTime.split('T')[0] !== dateStr) return false;
-        if (showPending && r.done) return false;
-        return true;
-    });
-    
-    if (dayReminders.length === 0) return;
-    
-    const html = dayReminders.map(r => {
-        const d = new Date(r.dateTime);
-        const timeStr = d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-        
-        return `
-            <div class="reminder-card ${r.done ? 'done' : ''}">
-                <div class="reminder-info">
-                    <div class="reminder-text">${escapeHtml(r.text)}</div>
-                    <div class="reminder-meta">
-                        <span>🕐 ${timeStr}</span>
-                        ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">🔗 Odkaz</a>` : ''}
-                    </div>
-                </div>
-                <div class="reminder-actions">
-                    <button class="btn-done" onclick="toggleDone(${r.id})">${r.done ? '↩️' : '✅'}</button>
-                    <button class="btn-delete" onclick="deleteReminder(${r.id})">🗑️</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-    
-    document.getElementById('remindersList').innerHTML = html;
+    // Highlight the day by scrolling to reminders
+    renderRemindersWithDate();
 }
 
 function escapeHtml(text) {
@@ -267,7 +251,7 @@ document.getElementById('addForm').addEventListener('submit', (e) => {
 window.toggleDone = toggleDone;
 window.deleteReminder = deleteReminder;
 window.showDayReminders = showDayReminders;
-window.addReminder = addReminder; // Exposed for external sync
+window.addReminder = addReminder;
 
 // Init
 loadReminders();
