@@ -1,10 +1,8 @@
 // Reminders App
-// Data storage - in production this would be fetched from GitHub
 let reminders = [];
 let currentMonth = new Date();
-let currentView = 'calendar';
 
-// Load reminders from localStorage (for demo) or JSON file
+// Load reminders from localStorage
 async function loadReminders() {
     try {
         const response = await fetch('reminders.json');
@@ -15,7 +13,6 @@ async function loadReminders() {
         console.log('Using localStorage or defaults');
     }
     
-    // Fallback to localStorage
     const stored = localStorage.getItem('reminders');
     if (stored) {
         reminders = JSON.parse(stored);
@@ -24,13 +21,10 @@ async function loadReminders() {
     render();
 }
 
-// Save reminders
 function saveReminders() {
     localStorage.setItem('reminders', JSON.stringify(reminders));
-    // In production, this would commit to GitHub
 }
 
-// Add new reminder
 function addReminder(text, dateTime, url = '') {
     const reminder = {
         id: Date.now(),
@@ -46,14 +40,12 @@ function addReminder(text, dateTime, url = '') {
     render();
 }
 
-// Delete reminder
 function deleteReminder(id) {
     reminders = reminders.filter(r => r.id !== id);
     saveReminders();
     render();
 }
 
-// Toggle done
 function toggleDone(id) {
     const reminder = reminders.find(r => r.id === id);
     if (reminder) {
@@ -63,37 +55,44 @@ function toggleDone(id) {
     }
 }
 
-// Render everything
 function render() {
     renderStats();
     renderCalendar();
     renderList();
 }
 
-// Stats
+function getShowOnlyPending() {
+    return document.getElementById('showOnlyPending').checked;
+}
+
 function renderStats() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
     
+    const showPending = getShowOnlyPending();
+    const filterFn = r => showPending ? !r.done : true;
+    
     const todayCount = reminders.filter(r => {
         const d = new Date(r.dateTime);
         d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime() && !r.done;
+        return d.getTime() === today.getTime() && filterFn(r);
     }).length;
     
     const upcomingCount = reminders.filter(r => {
         const d = new Date(r.dateTime);
-        return d >= today && d <= weekEnd && !r.done;
+        return d >= today && d <= weekEnd && filterFn(r);
     }).length;
     
-    document.getElementById('totalCount').textContent = reminders.filter(r => !r.done).length;
+    const pendingCount = reminders.filter(r => !r.done).length;
+    const totalCount = reminders.length;
+    
+    document.getElementById('totalCount').textContent = pendingCount + '/' + totalCount;
     document.getElementById('todayCount').textContent = todayCount;
     document.getElementById('upcomingCount').textContent = upcomingCount;
 }
 
-// Calendar
 function renderCalendar() {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -105,11 +104,13 @@ function renderCalendar() {
     
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startDay = (firstDay.getDay() + 6) % 7; // Monday = 0
+    const startDay = (firstDay.getDay() + 6) % 7;
     const daysInMonth = lastDay.getDate();
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    
+    const showPending = getShowOnlyPending();
     
     let html = '';
     
@@ -124,14 +125,19 @@ function renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dateStr = date.toISOString().split('T')[0];
-        const dayReminders = reminders.filter(r => r.dateTime.split('T')[0] === dateStr);
+        
+        const dayReminders = reminders.filter(r => {
+            if (showPending && r.done) return false;
+            return r.dateTime.split('T')[0] === dateStr;
+        });
+        
         const isToday = date.getTime() === today.getTime();
         
         let classes = 'calendar-day';
         if (isToday) classes += ' today';
         if (dayReminders.length > 0) classes += ' has-reminders';
         
-        let dots = dayReminders.map(r => 
+        const dots = dayReminders.slice(0, 5).map(r => 
             `<div class="reminder-dot ${r.done ? 'done' : ''}"></div>`
         ).join('');
         
@@ -151,35 +157,11 @@ function renderCalendar() {
     document.getElementById('calendarDays').innerHTML = html;
 }
 
-// List view
 function renderList() {
-    const statusFilter = document.getElementById('statusFilter').value;
-    const dateFilter = document.getElementById('dateFilter').value;
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    const monthEnd = new Date(today);
-    monthEnd.setMonth(monthEnd.getMonth() + 1);
+    const showPending = getShowOnlyPending();
     
     let filtered = reminders.filter(r => {
-        const d = new Date(r.dateTime);
-        
-        if (statusFilter === 'pending' && r.done) return false;
-        if (statusFilter === 'done' && !r.done) return false;
-        
-        if (dateFilter === 'today') {
-            d.setHours(0, 0, 0, 0);
-            return d.getTime() === today.getTime();
-        }
-        if (dateFilter === 'week') {
-            return d >= today && d <= weekEnd;
-        }
-        if (dateFilter === 'month') {
-            return d >= today && d <= monthEnd;
-        }
-        
+        if (showPending && r.done) return false;
         return true;
     });
     
@@ -218,16 +200,17 @@ function renderList() {
     document.getElementById('remindersList').innerHTML = html;
 }
 
-// Show reminders for a specific day
 function showDayReminders(dateStr) {
-    const dayReminders = reminders.filter(r => r.dateTime.split('T')[0] === dateStr);
+    const showPending = getShowOnlyPending();
+    
+    const dayReminders = reminders.filter(r => {
+        if (r.dateTime.split('T')[0] !== dateStr) return false;
+        if (showPending && r.done) return false;
+        return true;
+    });
+    
     if (dayReminders.length === 0) return;
     
-    // Switch to list view filtered by date
-    document.getElementById('dateFilter').value = 'all';
-    document.getElementById('listViewBtn').click();
-    
-    // Show only this day's reminders
     const listEl = document.getElementById('remindersList');
     const date = new Date(dateStr);
     const dateFormatted = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' });
@@ -256,7 +239,6 @@ function showDayReminders(dateStr) {
     listEl.innerHTML = html;
 }
 
-// Helper
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -274,26 +256,7 @@ document.getElementById('nextMonth').addEventListener('click', () => {
     renderCalendar();
 });
 
-document.getElementById('calendarViewBtn').addEventListener('click', () => {
-    currentView = 'calendar';
-    document.getElementById('calendarView').classList.remove('hidden');
-    document.getElementById('listView').classList.add('hidden');
-    document.getElementById('calendarViewBtn').classList.add('active');
-    document.getElementById('listViewBtn').classList.remove('active');
-    renderCalendar();
-});
-
-document.getElementById('listViewBtn').addEventListener('click', () => {
-    currentView = 'list';
-    document.getElementById('calendarView').classList.add('hidden');
-    document.getElementById('listView').classList.remove('hidden');
-    document.getElementById('listViewBtn').classList.add('active');
-    document.getElementById('calendarViewBtn').classList.remove('active');
-    renderList();
-});
-
-document.getElementById('statusFilter').addEventListener('change', renderList);
-document.getElementById('dateFilter').addEventListener('change', renderList);
+document.getElementById('showOnlyPending').addEventListener('change', render);
 
 document.getElementById('addReminderForm').addEventListener('submit', (e) => {
     e.preventDefault();
