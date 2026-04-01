@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reminders - Ondrej</title>
+    <title>Saved & Reminders - Ondrej</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🔔 Reminders</h1>
+            <h1>🔖 Saved & Reminders</h1>
             <div class="header-actions">
                 <label class="toggle-filter">
                     <input type="checkbox" id="showOnlyPending" checked>
@@ -41,23 +41,25 @@
             <!-- Right Column: List -->
             <div class="list-section">
                 <div class="stats" id="stats">
-                    <span id="totalCount">0</span> celkem · 
-                    <span id="todayCount">0</span> dnes · 
-                    <span id="upcomingCount">0</span> tento týden
+                    <span id="pendingCount">0</span> aktivních · 
+                    <span id="totalCount">0</span> celkem
                 </div>
                 <div id="remindersList"></div>
             </div>
         </div>
 
-        <!-- Add Reminder Form -->
+        <!-- Add Form -->
         <div class="add-form">
-            <h3>➕ Přidat reminder</h3>
-            <form id="addReminderForm">
-                <input type="text" id="reminderText" placeholder="Text reminderu..." required>
-                <input type="datetime-local" id="reminderDate" required>
+            <h3>➕ Přidat</h3>
+            <form id="addForm">
+                <input type="text" id="reminderText" placeholder="Text nebo poznámka..." required>
                 <input type="url" id="reminderUrl" placeholder="URL (volitelné)">
+                <input type="datetime-local" id="reminderDate">
                 <button type="submit">Přidat</button>
             </form>
+            <div class="help-text">
+                💡 Vše se ukládá lokálně. Pro synchronizaci s GitHub použij <code>/r</code> command v Telegramu.
+            </div>
         </div>
     </div>
 

@@ -1,8 +1,8 @@
-// Reminders App
+// Saved & Reminders App
 let reminders = [];
 let currentMonth = new Date();
 
-// Load reminders from localStorage
+// Load reminders
 async function loadReminders() {
     try {
         const response = await fetch('reminders.json');
@@ -10,10 +10,10 @@ async function loadReminders() {
             reminders = await response.json();
         }
     } catch (e) {
-        console.log('Using localStorage or defaults');
+        console.log('Using localStorage');
     }
     
-    const stored = localStorage.getItem('reminders');
+    const stored = localStorage.getItem('reminders_v2');
     if (stored) {
         reminders = JSON.parse(stored);
     }
@@ -22,22 +22,32 @@ async function loadReminders() {
 }
 
 function saveReminders() {
-    localStorage.setItem('reminders', JSON.stringify(reminders));
+    localStorage.setItem('reminders_v2', JSON.stringify(reminders));
 }
 
-function addReminder(text, dateTime, url = '') {
+function addReminder(text, url = '', dateTime = '') {
     const reminder = {
         id: Date.now(),
         text,
-        dateTime,
         url,
+        dateTime,
         done: false,
         createdAt: new Date().toISOString()
     };
+    
     reminders.push(reminder);
-    reminders.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    reminders.sort((a, b) => {
+        if (!a.dateTime && !b.dateTime) return 0;
+        if (!a.dateTime) return 1;
+        if (!b.dateTime) return -1;
+        return new Date(a.dateTime) - new Date(b.dateTime);
+    });
+    
     saveReminders();
     render();
+    
+    // Return the reminder for GitHub sync
+    return reminder;
 }
 
 function deleteReminder(id) {
@@ -61,36 +71,10 @@ function render() {
     renderList();
 }
 
-function getShowOnlyPending() {
-    return document.getElementById('showOnlyPending').checked;
-}
-
 function renderStats() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(today);
-    weekEnd.setDate(weekEnd.getDate() + 7);
-    
-    const showPending = getShowOnlyPending();
-    const filterFn = r => showPending ? !r.done : true;
-    
-    const todayCount = reminders.filter(r => {
-        const d = new Date(r.dateTime);
-        d.setHours(0, 0, 0, 0);
-        return d.getTime() === today.getTime() && filterFn(r);
-    }).length;
-    
-    const upcomingCount = reminders.filter(r => {
-        const d = new Date(r.dateTime);
-        return d >= today && d <= weekEnd && filterFn(r);
-    }).length;
-    
-    const pendingCount = reminders.filter(r => !r.done).length;
-    const totalCount = reminders.length;
-    
-    document.getElementById('totalCount').textContent = pendingCount + '/' + totalCount;
-    document.getElementById('todayCount').textContent = todayCount;
-    document.getElementById('upcomingCount').textContent = upcomingCount;
+    const pending = reminders.filter(r => !r.done).length;
+    document.getElementById('pendingCount').textContent = pending;
+    document.getElementById('totalCount').textContent = reminders.length;
 }
 
 function renderCalendar() {
@@ -110,15 +94,14 @@ function renderCalendar() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const showPending = getShowOnlyPending();
+    const showPending = document.getElementById('showOnlyPending').checked;
     
     let html = '';
     
     // Previous month days
     const prevMonth = new Date(year, month, 0);
     for (let i = startDay - 1; i >= 0; i--) {
-        const day = prevMonth.getDate() - i;
-        html += `<div class="calendar-day other-month"><span class="day-number">${day}</span></div>`;
+        html += `<div class="calendar-day other-month"><span class="day-number">${prevMonth.getDate() - i}</span></div>`;
     }
     
     // Current month days
@@ -127,6 +110,7 @@ function renderCalendar() {
         const dateStr = date.toISOString().split('T')[0];
         
         const dayReminders = reminders.filter(r => {
+            if (!r.dateTime) return false;
             if (showPending && r.done) return false;
             return r.dateTime.split('T')[0] === dateStr;
         });
@@ -158,34 +142,47 @@ function renderCalendar() {
 }
 
 function renderList() {
-    const showPending = getShowOnlyPending();
+    const showPending = document.getElementById('showOnlyPending').checked;
     
-    let filtered = reminders.filter(r => {
-        if (showPending && r.done) return false;
-        return true;
+    // Sort: with date first (ascending), without date at end
+    let sorted = [...reminders].sort((a, b) => {
+        if (!a.dateTime && !b.dateTime) return 0;
+        if (!a.dateTime) return 1;
+        if (!b.dateTime) return -1;
+        return new Date(a.dateTime) - new Date(b.dateTime);
     });
     
-    if (filtered.length === 0) {
+    if (showPending) {
+        sorted = sorted.filter(r => !r.done);
+    }
+    
+    if (sorted.length === 0) {
         document.getElementById('remindersList').innerHTML = `
             <div class="empty-state">
-                <h3>📭 Žádné remindery</h3>
-                <p>Přidej nový reminder pomocí formuláře níže</p>
+                <h3>📭 Žádné položky</h3>
+                <p>Použij <code>/r</code> v Telegramu pro přidání</p>
             </div>
         `;
         return;
     }
     
-    const html = filtered.map(r => {
-        const date = new Date(r.dateTime);
-        const dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
-        const timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+    const html = sorted.map(r => {
+        const hasDate = r.dateTime;
+        let dateStr = '';
+        let timeStr = '';
+        
+        if (hasDate) {
+            const date = new Date(r.dateTime);
+            dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+            timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+        }
         
         return `
             <div class="reminder-card ${r.done ? 'done' : ''}">
                 <div class="reminder-info">
                     <div class="reminder-text">${escapeHtml(r.text)}</div>
                     <div class="reminder-meta">
-                        <span>📅 ${dateStr} ${timeStr}</span>
+                        ${hasDate ? `<span>📅 ${dateStr} ${timeStr}</span>` : '<span>📌 K přečtení</span>'}
                         ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">🔗 Odkaz</a>` : ''}
                     </div>
                 </div>
@@ -201,19 +198,15 @@ function renderList() {
 }
 
 function showDayReminders(dateStr) {
-    const showPending = getShowOnlyPending();
+    const showPending = document.getElementById('showOnlyPending').checked;
     
     const dayReminders = reminders.filter(r => {
-        if (r.dateTime.split('T')[0] !== dateStr) return false;
+        if (!r.dateTime || r.dateTime.split('T')[0] !== dateStr) return false;
         if (showPending && r.done) return false;
         return true;
     });
     
     if (dayReminders.length === 0) return;
-    
-    const listEl = document.getElementById('remindersList');
-    const date = new Date(dateStr);
-    const dateFormatted = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long' });
     
     const html = dayReminders.map(r => {
         const d = new Date(r.dateTime);
@@ -236,7 +229,7 @@ function showDayReminders(dateStr) {
         `;
     }).join('');
     
-    listEl.innerHTML = html;
+    document.getElementById('remindersList').innerHTML = html;
 }
 
 function escapeHtml(text) {
@@ -258,22 +251,23 @@ document.getElementById('nextMonth').addEventListener('click', () => {
 
 document.getElementById('showOnlyPending').addEventListener('change', render);
 
-document.getElementById('addReminderForm').addEventListener('submit', (e) => {
+document.getElementById('addForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    const text = document.getElementById('reminderText').value;
+    const text = document.getElementById('reminderText').value.trim();
+    const url = document.getElementById('reminderUrl').value.trim();
     const dateTime = document.getElementById('reminderDate').value;
-    const url = document.getElementById('reminderUrl').value;
     
-    if (text && dateTime) {
-        addReminder(text, dateTime, url);
+    if (text) {
+        addReminder(text, url, dateTime);
         e.target.reset();
     }
 });
 
-// Make functions globally available
+// Global functions
 window.toggleDone = toggleDone;
 window.deleteReminder = deleteReminder;
 window.showDayReminders = showDayReminders;
+window.addReminder = addReminder; // Exposed for external sync
 
 // Init
 loadReminders();
