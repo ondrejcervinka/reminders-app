@@ -94,5 +94,13 @@
     "dateTime": "",
     "done": false,
     "createdAt": "2026-04-03T13:47:00Z"
+  },
+  {
+    "id": 1000000005,
+    "text": "NVIDIA Gemma 4 31B quantized on Hugging Face - @outsource_",
+    "url": "https://x.com/outsource_/status/2040059394126205233",
+    "dateTime": "",
+    "done": false,
+    "createdAt": "2026-04-03T18:35:00Z"
   }
 ]
