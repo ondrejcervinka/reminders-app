@@ -102,5 +102,13 @@
     "dateTime": "",
     "done": false,
     "createdAt": "2026-04-03T18:35:00Z"
+  },
+  {
+    "id": 1000000006,
+    "text": "Gemma 4 test - Lukas Fronk (CZ)",
+    "url": "https://x.com/fronk/status/2040114443229532421",
+    "dateTime": "",
+    "done": false,
+    "createdAt": "2026-04-03T22:12:00Z"
   }
 ]
