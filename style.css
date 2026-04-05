@@ -1,3 +1,15 @@
+/* ── Sync Status ── */
+.sync-status {
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    transition: opacity 0.3s;
+}
+.sync-status.saving { background: #FEF9C3; color: #92400E; }
+.sync-status.ok     { background: #DCFCE7; color: #15803D; }
+.sync-status.error  { background: #FEE2E2; color: #B91C1C; }
+
 /* ── Reset ── */
 *, *::before, *::after {
     margin: 0;

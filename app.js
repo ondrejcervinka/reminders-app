@@ -4,6 +4,72 @@ let currentMonth = new Date();
 let currentWeekStart = getWeekStart(new Date());
 let currentView = 'monthly';
 
+// ── GitHub API ──
+const GH_OWNER  = 'ondrejcervinka';
+const GH_REPO   = 'reminders-app';
+const GH_FILE   = 'data/reminders.json';
+const GH_BRANCH = 'main';
+
+function getToken() { return localStorage.getItem('gh_token'); }
+function setToken(t) { localStorage.setItem('gh_token', t); }
+function clearToken() { localStorage.removeItem('gh_token'); }
+
+function setSyncStatus(state, msg) {
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    el.className = 'sync-status ' + state;
+    el.textContent = msg;
+    if (state === 'ok') setTimeout(() => { el.textContent = ''; el.className = 'sync-status'; }, 3000);
+}
+
+async function getFileSha(token) {
+    const res = await fetch(
+        `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}?ref=${GH_BRANCH}`,
+        { headers: { Authorization: `token ${token}` } }
+    );
+    if (!res.ok) throw new Error(`SHA fetch failed: ${res.status}`);
+    const data = await res.json();
+    return data.sha;
+}
+
+async function saveToGitHub() {
+    let token = getToken();
+
+    if (!token) {
+        token = prompt('Zadej GitHub Personal Access Token\n(Settings → Developer settings → Fine-grained tokens, scope: Contents write na tomto repo):');
+        if (!token) return;
+        setToken(token);
+    }
+
+    setSyncStatus('saving', 'Ukladam...');
+    try {
+        const sha     = await getFileSha(token);
+        const json    = JSON.stringify(reminders, null, 2);
+        const content = btoa(unescape(encodeURIComponent(json)));
+
+        const res = await fetch(
+            `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_FILE}`,
+            {
+                method: 'PUT',
+                headers: { Authorization: `token ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'Update reminders', content, sha, branch: GH_BRANCH })
+            }
+        );
+
+        if (res.status === 401) {
+            clearToken();
+            setSyncStatus('error', 'Chybny token — zkus znovu');
+            return;
+        }
+        if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+
+        setSyncStatus('ok', 'Ulozeno');
+    } catch (e) {
+        console.error(e);
+        setSyncStatus('error', 'Chyba ulozeni');
+    }
+}
+
 // Pill color palette
 const PILL_COLORS = [
     { bg: '#EEF2FF', fg: '#4338CA' },
@@ -42,29 +108,28 @@ function escapeHtml(text) {
 
 // ── Data ──
 async function loadReminders() {
-    // localStorage is the primary store — use JSON only as seed on first visit
-    const stored = localStorage.getItem('reminders_v2');
-    if (stored) {
-        reminders = JSON.parse(stored);
-        render();
-        return;
-    }
-
-    // First visit: seed from the git JSON
+    // Always fetch from GitHub — JSON is the source of truth
     try {
-        const response = await fetch('data/reminders.json');
-        if (response.ok) {
-            reminders = await response.json();
-            saveReminders();
+        const res = await fetch(`https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_FILE}?_=${Date.now()}`);
+        if (res.ok) {
+            reminders = await res.json();
+            render();
+            return;
         }
     } catch (e) {
-        console.log('Could not load seed data from JSON');
+        console.log('GitHub fetch failed, falling back to local');
     }
+    // Fallback: relative path (local dev server)
+    try {
+        const res = await fetch(`data/reminders.json?_=${Date.now()}`);
+        if (res.ok) reminders = await res.json();
+    } catch (e) {}
     render();
 }
 
 function saveReminders() {
-    localStorage.setItem('reminders_v2', JSON.stringify(reminders));
+    // Fire-and-forget GitHub save; no localStorage needed
+    saveToGitHub();
 }
 
 async function summarizeUrl(url) {
