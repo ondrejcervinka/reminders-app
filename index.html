@@ -3,65 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saved & Reminders - Ondrej</title>
+    <title>Reminders</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🔖 Saved & Reminders</h1>
-            <div class="header-actions">
-                <label class="toggle-filter">
-                    <input type="checkbox" id="showOnlyPending" checked>
-                    <span>Jen aktivní</span>
-                </label>
+    <div class="app">
+        <!-- Left Column: Calendar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>Kalendar</h1>
             </div>
-        </header>
-
-        <div class="main-layout">
-            <!-- Left Column: Calendar -->
-            <div class="calendar-section">
-                <div class="calendar-header">
-                    <button id="prevMonth">←</button>
+            
+            <div class="calendar-widget">
+                <div class="calendar-nav">
+                    <button id="prevMonth" class="nav-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
                     <h2 id="currentMonth"></h2>
-                    <button id="nextMonth">→</button>
+                    <button id="nextMonth" class="nav-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
                 </div>
                 <div class="calendar-grid">
                     <div class="day-header">Po</div>
-                    <div class="day-header">Út</div>
+                    <div class="day-header">Ut</div>
                     <div class="day-header">St</div>
-                    <div class="day-header">Čt</div>
-                    <div class="day-header">Pá</div>
+                    <div class="day-header">Ct</div>
+                    <div class="day-header">Pa</div>
                     <div class="day-header">So</div>
                     <div class="day-header">Ne</div>
                 </div>
                 <div class="calendar-days" id="calendarDays"></div>
             </div>
 
-            <!-- Middle Column: Reminders with dates -->
-            <div class="list-section" id="remindersColumn">
-                <h3>📅 Úkoly</h3>
-                <div id="remindersList"></div>
+            <div class="upcoming-section">
+                <h3>Kategorie</h3>
+                <label class="filter-toggle">
+                    <input type="checkbox" id="showOnlyPending" checked>
+                    <span>Jen aktivni</span>
+                </label>
             </div>
+        </aside>
 
-            <!-- Right Column: Read later -->
-            <div class="list-section" id="readLaterColumn">
-                <h3>📌 K přečtení</h3>
-                <div id="readLaterList"></div>
+        <!-- Middle Column: Tasks with date -->
+        <main class="main-content">
+            <div class="content-header">
+                <h2>Ulohy</h2>
             </div>
-        </div>
+            <div id="remindersList"></div>
+        </main>
 
-        <!-- Add Form -->
-        <div class="add-form">
-            <h3>➕ Přidat</h3>
+        <!-- Right Column: Read Later -->
+        <aside class="right-sidebar">
+            <div class="content-header">
+                <h2>Ke cteni</h2>
+            </div>
+            <div id="readLaterList"></div>
+        </aside>
+    </div>
+
+    <!-- Add Form Modal Trigger -->
+    <button class="fab" id="openAddModal">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14"/>
+        </svg>
+    </button>
+
+    <!-- Add Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Pridat</h3>
+                <button class="close-btn" id="closeModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
             <form id="addForm">
-                <input type="text" id="reminderText" placeholder="Text nebo poznámka..." required>
-                <input type="url" id="reminderUrl" placeholder="URL (volitelné)">
+                <input type="text" id="reminderText" placeholder="Text nebo poznamka..." required>
+                <input type="url" id="reminderUrl" placeholder="URL (volitelne)">
                 <input type="datetime-local" id="reminderDate">
-                <button type="submit">Přidat</button>
+                <button type="submit" class="submit-btn">Pridat</button>
             </form>
             <div class="help-text">
-                💡 Vše se ukládá lokálně. Pro synchronizaci s GitHub použij <code>/r</code> command v Telegramu.
+                Ulozeno lokalne. Pro synchronizaci pouzij <code>/r</code> v Telegramu.
             </div>
         </div>
     </div>

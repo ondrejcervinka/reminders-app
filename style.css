@@ -1,3 +1,4 @@
+/* Reset & Base */
 * {
     margin: 0;
     padding: 0;
@@ -5,96 +6,91 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #F8F9FA;
+    color: #1A1A1A;
     min-height: 100vh;
-    color: #fff;
-    padding: 15px;
     font-size: 14px;
+    line-height: 1.5;
 }
 
-.container {
-    max-width: 1400px;
+/* App Layout - 3 columns */
+.app {
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    min-height: 100vh;
+    max-width: 1600px;
     margin: 0 auto;
 }
 
-header {
+/* Sidebar (Left - Calendar) */
+.sidebar {
+    background: #FFFFFF;
+    border-right: 1px solid #E8E8E8;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.sidebar-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+/* Calendar Widget */
+.calendar-widget {
+    background: #F8F9FA;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.calendar-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding: 10px 15px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
+    margin-bottom: 16px;
 }
 
-header h1 {
-    font-size: 1.3rem;
+.calendar-nav h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1A1A1A;
 }
 
-.toggle-filter {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.toggle-filter input {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-/* Three-column layout */
-.main-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-/* Calendar Section */
-.calendar-section {
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 15px;
-}
-
-.calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.calendar-header h2 {
-    font-size: 1rem;
-}
-
-.calendar-header button {
-    padding: 5px 10px;
+.nav-btn {
+    width: 32px;
+    height: 32px;
     border: none;
-    border-radius: 5px;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #717171;
     cursor: pointer;
-    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background: #00ADEF;
+    color: #FFFFFF;
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .day-header {
     text-align: center;
-    padding: 5px;
-    font-weight: bold;
-    color: #888;
+    padding: 8px 0;
     font-size: 0.7rem;
+    font-weight: 500;
+    color: #717171;
 }
 
 .calendar-days {
@@ -108,277 +104,418 @@ header h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 2px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 5px;
+    justify-content: center;
+    padding: 4px;
+    background: #FFFFFF;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.75rem;
-    min-height: 32px;
+    font-weight: 500;
+    color: #1A1A1A;
 }
 
 .calendar-day:hover {
-    background: rgba(255,255,255,0.15);
+    background: #E8F7FC;
 }
 
 .calendar-day.other-month {
-    opacity: 0.3;
+    color: #BDBDBD;
 }
 
 .calendar-day.today {
-    background: rgba(76, 175, 80, 0.3);
-    border: 2px solid #4CAF50;
+    background: #00ADEF;
+    color: #FFFFFF;
+    font-weight: 600;
 }
 
 .calendar-day.has-reminders {
-    background: rgba(255, 193, 7, 0.2);
+    background: #E8F7FC;
 }
 
-.calendar-day .day-number {
-    font-weight: bold;
-    font-size: 0.75rem;
+.calendar-day.has-reminders.today {
+    background: #00ADEF;
 }
 
 .calendar-day .reminder-dots {
     display: flex;
-    flex-wrap: wrap;
     gap: 2px;
-    justify-content: center;
+    margin-top: 2px;
 }
 
 .reminder-dot {
-    width: 5px;
-    height: 5px;
+    width: 4px;
+    height: 4px;
     border-radius: 50%;
-    background: #FFC107;
+    background: #00ADEF;
 }
 
 .reminder-dot.done {
-    background: #4CAF50;
+    background: #00C1A3;
 }
 
-/* List Sections */
-.list-section {
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 15px;
-    max-height: 500px;
-    overflow-y: auto;
+/* Upcoming / Filters Section */
+.upcoming-section {
+    padding-top: 16px;
+    border-top: 1px solid #E8E8E8;
 }
 
-.list-section h3 {
+.upcoming-section h3 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #717171;
     margin-bottom: 12px;
-    font-size: 0.95rem;
-    color: #ccc;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-#readLaterColumn h3 {
-    color: #4FC3F7;
+.filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #1A1A1A;
 }
 
-#remindersColumn h3 {
-    color: #FFC107;
+.filter-toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: #00ADEF;
+    cursor: pointer;
 }
 
+/* Main Content (Middle - Tasks) */
+.main-content {
+    background: #F8F9FA;
+    padding: 24px 32px;
+}
+
+.content-header {
+    margin-bottom: 20px;
+}
+
+.content-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1A1A1A;
+}
+
+/* Right Sidebar (Read Later) */
+.right-sidebar {
+    background: #FFFFFF;
+    border-left: 1px solid #E8E8E8;
+    padding: 24px;
+}
+
+.right-sidebar .content-header h2 {
+    color: #8E54E9;
+}
+
+/* Card Styles */
 .column-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
 }
 
 .reminder-card {
-    background: rgba(255,255,255,0.05);
-    border-radius: 10px;
-    padding: 12px 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     transition: all 0.2s;
+    border: 1px solid #F0F0F0;
 }
 
 .reminder-card:hover {
-    background: rgba(255,255,255,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 .reminder-card.done {
-    opacity: 0.5;
-}
-
-.reminder-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.reminder-text {
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-    word-break: break-word;
+    opacity: 0.6;
 }
 
 .reminder-card.done .reminder-text {
     text-decoration: line-through;
-    color: #888;
+    color: #717171;
+}
+
+.reminder-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.reminder-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1A1A1A;
+    line-height: 1.4;
 }
 
 .reminder-meta {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
     font-size: 0.75rem;
-    color: #888;
+    color: #717171;
+}
+
+.reminder-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #F0F0F0;
+    padding: 4px 8px;
+    border-radius: 6px;
 }
 
 .reminder-url {
-    color: #4FC3F7;
+    color: #00ADEF;
     text-decoration: none;
     word-break: break-all;
+    font-weight: 500;
 }
 
 .reminder-url:hover {
     text-decoration: underline;
 }
 
+.reminder-excerpt {
+    font-size: 0.8rem;
+    color: #717171;
+    margin-top: 6px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .reminder-actions {
     display: flex;
     gap: 6px;
+    flex-shrink: 0;
 }
 
 .reminder-actions button {
-    padding: 5px 10px;
+    width: 32px;
+    height: 32px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s;
 }
 
 .btn-done {
-    background: rgba(76, 175, 80, 0.2);
-    color: #4CAF50;
+    background: #E8F5E9;
+    color: #00C1A3;
 }
 
 .btn-done:hover {
-    background: #4CAF50;
-    color: #fff;
+    background: #00C1A3;
+    color: #FFFFFF;
 }
 
 .btn-delete {
-    background: rgba(244, 67, 54, 0.2);
-    color: #f44336;
+    background: #FFEBEE;
+    color: #E57373;
 }
 
 .btn-delete:hover {
-    background: #f44336;
-    color: #fff;
+    background: #E57373;
+    color: #FFFFFF;
 }
 
-/* Add Form */
-.add-form {
-    background: rgba(255,255,255,0.05);
-    border-radius: 12px;
-    padding: 15px;
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #717171;
 }
 
-.add-form h3 {
-    margin-bottom: 12px;
-    font-size: 1rem;
+.empty-state h3 {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #BDBDBD;
+}
+
+/* FAB Button */
+.fab {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: #00ADEF;
+    color: #FFFFFF;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 173, 239, 0.4);
+    transition: all 0.2s;
+    z-index: 100;
+}
+
+.fab:hover {
+    background: #0095CC;
+    transform: scale(1.05);
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1A1A1A;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: #F0F0F0;
+    color: #717171;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: #E0E0E0;
+    color: #1A1A1A;
 }
 
 #addForm {
-    display: grid;
-    grid-template-columns: 1fr 200px 180px auto;
-    gap: 10px;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 #addForm input {
-    padding: 10px 12px;
-    border: none;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.1);
-    color: #fff;
+    padding: 12px 16px;
+    border: 1px solid #E0E0E0;
+    border-radius: 10px;
     font-size: 0.9rem;
-}
-
-#addForm input::placeholder {
-    color: #888;
+    font-family: inherit;
+    transition: all 0.2s;
 }
 
 #addForm input:focus {
     outline: none;
-    background: rgba(255,255,255,0.15);
+    border-color: #00ADEF;
+    box-shadow: 0 0 0 3px rgba(0, 173, 239, 0.1);
 }
 
-#addForm button {
-    padding: 10px 15px;
+#addForm input::placeholder {
+    color: #BDBDBD;
+}
+
+.submit-btn {
+    padding: 12px 20px;
     border: none;
-    border-radius: 6px;
-    background: #4CAF50;
-    color: #fff;
+    border-radius: 10px;
+    background: #00ADEF;
+    color: #FFFFFF;
     font-size: 0.9rem;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.2s;
-    white-space: nowrap;
+    margin-top: 4px;
 }
 
-#addForm button:hover {
-    background: #45a049;
+.submit-btn:hover {
+    background: #0095CC;
 }
 
-/* Empty state */
-.empty-state {
+.help-text {
+    margin-top: 16px;
+    font-size: 0.75rem;
+    color: #717171;
     text-align: center;
-    padding: 20px;
-    color: #888;
-    font-size: 0.85rem;
 }
 
-.empty-state h3 {
-    margin-bottom: 5px;
-    color: #666;
+.help-text code {
+    background: #F0F0F0;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
 }
 
 /* Responsive */
-@media (max-width: 1100px) {
-    .main-layout {
+@media (max-width: 1200px) {
+    .app {
+        grid-template-columns: 240px 1fr 280px;
+    }
+}
+
+@media (max-width: 900px) {
+    .app {
         grid-template-columns: 1fr 1fr;
     }
     
-    .calendar-section {
+    .sidebar {
         grid-column: span 2;
+    }
+    
+    .calendar-widget {
+        max-width: 400px;
     }
 }
 
-@media (max-width: 700px) {
-    .main-layout {
+@media (max-width: 600px) {
+    .app {
         grid-template-columns: 1fr;
     }
     
-    .calendar-section {
+    .sidebar {
         grid-column: 1;
     }
     
-    #addForm {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 500px) {
-    body {
-        padding: 10px;
-    }
-    
-    .calendar-day {
-        min-height: 28px;
-        font-size: 0.65rem;
-    }
-    
-    .reminder-card {
-        flex-direction: column;
-        align-items: flex-start;
+    .right-sidebar {
+        border-left: none;
+        border-top: 1px solid #E8E8E8;
     }
 }

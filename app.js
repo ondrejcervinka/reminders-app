@@ -1,4 +1,4 @@
-// Saved & Reminders App
+// Reminders App
 let reminders = [];
 let currentMonth = new Date();
 
@@ -16,7 +16,6 @@ async function loadReminders() {
         console.log('Using localStorage');
     }
     
-    // Only use localStorage as fallback
     if (!loadedFromServer) {
         const stored = localStorage.getItem('reminders_v2');
         if (stored) {
@@ -31,27 +30,68 @@ function saveReminders() {
     localStorage.setItem('reminders_v2', JSON.stringify(reminders));
 }
 
-function addReminder(text, url = '', dateTime = '') {
+// Auto-summarize URL content
+async function summarizeUrl(url) {
+    try {
+        const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+        const html = await response.text();
+        
+        // Extract title
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const title = titleMatch ? titleMatch[1].trim() : '';
+        
+        // Extract meta description
+        const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
+        const description = descMatch ? descMatch[1].trim() : '';
+        
+        // Extract og:image for thumbnail
+        const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
+        const image = ogImageMatch ? ogImageMatch[1].trim() : '';
+        
+        return {
+            title: title.substring(0, 100),
+            description: description.substring(0, 200) || title.substring(0, 100),
+            image
+        };
+    } catch (e) {
+        console.log('Failed to fetch URL summary:', e);
+        return { title: '', description: '', image: '' };
+    }
+}
+
+async function addReminder(text, url = '', dateTime = '') {
     const reminder = {
         id: Date.now(),
         text,
         url,
         dateTime,
         done: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        title: '',
+        description: ''
     };
     
+    // Auto-summarize URL if provided
+    if (url) {
+        const summary = await summarizeUrl(url);
+        reminder.title = summary.title || text.substring(0, 60);
+        reminder.description = summary.description;
+    }
+    
     reminders.push(reminder);
+    sortReminders();
+    saveReminders();
+    render();
+    return reminder;
+}
+
+function sortReminders() {
     reminders.sort((a, b) => {
         if (!a.dateTime && !b.dateTime) return 0;
         if (!a.dateTime) return 1;
         if (!b.dateTime) return -1;
         return new Date(a.dateTime) - new Date(b.dateTime);
     });
-    
-    saveReminders();
-    render();
-    return reminder;
 }
 
 function deleteReminder(id) {
@@ -79,8 +119,8 @@ function renderCalendar() {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     
-    const monthNames = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 
-                        'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+    const monthNames = ['Leden', 'Unor', 'Březen', 'Duben', 'Kveten', 'Cerven', 
+                        'Cervenec', 'Srpen', 'Zari', 'Rijen', 'Listopad', 'Prosinec'];
     
     document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
     
@@ -119,7 +159,7 @@ function renderCalendar() {
         if (isToday) classes += ' today';
         if (dayReminders.length > 0) classes += ' has-reminders';
         
-        const dots = dayReminders.slice(0, 5).map(r => 
+        const dots = dayReminders.slice(0, 3).map(r => 
             `<div class="reminder-dot ${r.done ? 'done' : ''}"></div>`
         ).join('');
         
@@ -147,13 +187,12 @@ function renderRemindersWithDate() {
         filtered = filtered.filter(r => !r.done);
     }
     
-    // Sort by date ascending
     filtered.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
     
     if (filtered.length === 0) {
         document.getElementById('remindersList').innerHTML = `
             <div class="empty-state">
-                <h3>📅 Žádné úkoly</h3>
+                <h3>Zadne ulohy</h3>
             </div>
         `;
         return;
@@ -171,13 +210,12 @@ function renderReadLater() {
         filtered = filtered.filter(r => !r.done);
     }
     
-    // Sort by created desc (newest first)
     filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     if (filtered.length === 0) {
         document.getElementById('readLaterList').innerHTML = `
             <div class="empty-state">
-                <h3>📌 Nic k přečtení</h3>
+                <h3>Nic k precteni</h3>
             </div>
         `;
         return;
@@ -191,34 +229,44 @@ function createReminderCard(r) {
     const hasDate = r.dateTime;
     let dateStr = '';
     let timeStr = '';
-    let label = '📌';
     
     if (hasDate) {
         const date = new Date(r.dateTime);
         dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
         timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-        label = '📅';
     }
+    
+    const displayTitle = r.title || escapeHtml(r.text);
+    const displayExcerpt = r.description ? `<div class="reminder-excerpt">${escapeHtml(r.description)}</div>` : '';
+    
+    const iconCalendar = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+    const iconLink = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+    const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    const iconTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
     
     return `
         <div class="reminder-card ${r.done ? 'done' : ''}">
-            <div class="reminder-info">
-                <div class="reminder-text">${escapeHtml(r.text)}</div>
-                <div class="reminder-meta">
-                    ${hasDate ? `<span>${label} ${dateStr} ${timeStr}</span>` : ''}
-                    ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">🔗</a>` : ''}
+            <div class="reminder-header">
+                <div class="reminder-text">${escapeHtml(displayTitle)}</div>
+                <div class="reminder-actions">
+                    <button class="btn-done" onclick="toggleDone(${r.id})" title="${r.done ? 'Obnovit' : 'Hotovo'}">
+                        ${iconCheck}
+                    </button>
+                    <button class="btn-delete" onclick="deleteReminder(${r.id})" title="Smazat">
+                        ${iconTrash}
+                    </button>
                 </div>
             </div>
-            <div class="reminder-actions">
-                <button class="btn-done" onclick="toggleDone(${r.id})">${r.done ? '↩️' : '✅'}</button>
-                <button class="btn-delete" onclick="deleteReminder(${r.id})">🗑️</button>
+            ${displayExcerpt}
+            <div class="reminder-meta">
+                ${hasDate ? `<span class="reminder-date">${iconCalendar} ${dateStr} ${timeStr}</span>` : ''}
+                ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">${iconLink} Odkaz</a>` : ''}
             </div>
         </div>
     `;
 }
 
 function showDayReminders(dateStr) {
-    // Highlight the day by scrolling to reminders
     renderRemindersWithDate();
 }
 
@@ -227,6 +275,26 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Modal handling
+const modal = document.getElementById('addModal');
+const fab = document.getElementById('openAddModal');
+const closeBtn = document.getElementById('closeModal');
+
+fab.addEventListener('click', () => {
+    modal.classList.add('active');
+    document.getElementById('reminderText').focus();
+});
+
+closeBtn.addEventListener('click', () => {
+    modal.classList.remove('active');
+});
+
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.classList.remove('active');
+    }
+});
 
 // Event listeners
 document.getElementById('prevMonth').addEventListener('click', () => {
@@ -241,15 +309,23 @@ document.getElementById('nextMonth').addEventListener('click', () => {
 
 document.getElementById('showOnlyPending').addEventListener('change', render);
 
-document.getElementById('addForm').addEventListener('submit', (e) => {
+document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const text = document.getElementById('reminderText').value.trim();
     const url = document.getElementById('reminderUrl').value.trim();
     const dateTime = document.getElementById('reminderDate').value;
     
     if (text) {
-        addReminder(text, url, dateTime);
+        await addReminder(text, url, dateTime);
         e.target.reset();
+        modal.classList.remove('active');
+    }
+});
+
+// Keyboard shortcut to close modal
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('active')) {
+        modal.classList.remove('active');
     }
 });
 
