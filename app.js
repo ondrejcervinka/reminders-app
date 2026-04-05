@@ -122,7 +122,8 @@ function toggleDone(id) {
 function render() {
     renderCalendar();
     renderWeeklyCalendar();
-    renderTaskList();
+    renderTaskListCompact();
+    renderReadLaterList();
 }
 
 function renderCalendar() {
@@ -285,55 +286,76 @@ function renderWeeklyCalendar() {
     document.getElementById('weekRangeLabel').textContent = weekRangeText;
 }
 
-function renderTaskList() {
-    const showPending = document.getElementById('showOnlyPending')?.checked ?? true;
+function renderTaskListCompact() {
+    const showPending = true;
     
     let filtered = reminders.filter(r => r.dateTime);
     if (showPending) {
         filtered = filtered.filter(r => !r.done);
     }
     
+    const iconCheck = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    const iconTrash = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    
     if (filtered.length === 0) {
-        document.getElementById('tasksList').innerHTML = `
-            <div class="empty-state">
-                <h3>Zadne ukoly</h3>
+        document.getElementById('tasksListCompact').innerHTML = `
+            <div class="task-empty-compact">Zadne ukoly</div>
+        `;
+        return;
+    }
+    
+    const html = filtered.slice(0, 8).map(r => `
+        <div class="task-item-compact ${r.done ? 'done' : ''}" onclick="toggleDone(${r.id})">
+            <div class="task-check">
+                ${r.done ? iconCheck : ''}
+            </div>
+            <div class="task-title-compact">${escapeHtml(r.title || r.text)}</div>
+            <button class="task-del" onclick="event.stopPropagation(); deleteReminder(${r.id})" title="Smazat">
+                ${iconTrash}
+            </button>
+        </div>
+    `).join('');
+    
+    document.getElementById('tasksListCompact').innerHTML = `<div class="task-list-compact">${html}</div>`;
+}
+
+function renderReadLaterList() {
+    // Items with URL but no dateTime = read later
+    let readLater = reminders.filter(r => r.url && !r.dateTime);
+    
+    const iconLink = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+    const iconTrash = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+    const iconExternal = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
+    
+    if (readLater.length === 0) {
+        document.getElementById('readLaterList').innerHTML = `
+            <div class="read-later-empty">
+                <h3>Nic k precteni</h3>
             </div>
         `;
         return;
     }
     
-    const iconCalendar = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
-    const iconLink = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
-    const iconCheck = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-    const iconTrash = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
-    
-    const html = filtered.map(r => {
-        const date = new Date(r.dateTime);
-        const dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
-        const timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-        
-        return `
-            <div class="task-card ${r.done ? 'done' : ''}">
-                <div class="task-header">
-                    <div class="task-text">${escapeHtml(r.title || r.text)}</div>
-                    <div class="task-actions">
-                        <button class="btn-done" onclick="toggleDone(${r.id})" title="${r.done ? 'Obnovit' : 'Hotovo'}">
-                            ${iconCheck}
-                        </button>
-                        <button class="btn-delete" onclick="deleteReminder(${r.id})" title="Smazat">
-                            ${iconTrash}
-                        </button>
-                    </div>
-                </div>
-                <div class="task-meta">
-                    <span class="task-date">${iconCalendar} ${dateStr} ${timeStr}</span>
-                    ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="task-url">${iconLink} Odkaz</a>` : ''}
-                </div>
+    const html = readLater.map(r => `
+        <div class="read-later-item">
+            <div class="rl-title">${escapeHtml(r.title || r.text)}</div>
+            ${r.description ? `<div class="rl-desc">${escapeHtml(r.description)}</div>` : ''}
+            <div class="rl-meta">
+                ${iconLink}
+                <span>${escapeHtml(r.url)}</span>
             </div>
-        `;
-    }).join('');
+            <div class="rl-actions">
+                <button class="rl-btn rl-btn-open" onclick="window.open('${escapeHtml(r.url)}', '_blank')" title="Otevrit">
+                    ${iconExternal}
+                </button>
+                <button class="rl-btn rl-btn-del" onclick="deleteReminder(${r.id})" title="Smazat">
+                    ${iconTrash}
+                </button>
+            </div>
+        </div>
+    `).join('');
     
-    document.getElementById('tasksList').innerHTML = `<div class="column-content">${html}</div>`;
+    document.getElementById('readLaterList').innerHTML = `<div class="read-later-list">${html}</div>`;
 }
 
 function showDayReminders(dateStr) {

@@ -11,7 +11,7 @@
 </head>
 <body>
     <div class="app">
-        <!-- Left Column: Mini Calendar -->
+        <!-- Left Column: Mini Calendar + Tasks -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h1>Kalendar</h1>
@@ -43,12 +43,11 @@
                 <div class="calendar-days" id="calendarDays"></div>
             </div>
 
-            <div class="upcoming-section">
-                <h3>Kategorie</h3>
-                <label class="filter-toggle">
-                    <input type="checkbox" id="showOnlyPending" checked>
-                    <span>Jen aktivni</span>
-                </label>
+            <div class="sidebar-tasks">
+                <div class="sidebar-tasks-header">
+                    <h3>Ulohy</h3>
+                </div>
+                <div id="tasksListCompact"></div>
             </div>
         </aside>
 
@@ -75,12 +74,12 @@
             </div>
         </main>
 
-        <!-- Right Column: Task List -->
+        <!-- Right Column: Read Later -->
         <aside class="right-sidebar">
-            <div class="content-header">
-                <h2>Ulohy</h2>
+            <div class="right-sidebar-header">
+                <h2>K precteni</h2>
             </div>
-            <div id="tasksList"></div>
+            <div id="readLaterList"></div>
         </aside>
     </div>
 
