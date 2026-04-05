@@ -1,6 +1,20 @@
 // Reminders App
 let reminders = [];
 let currentMonth = new Date();
+let currentWeekStart = getWeekStart(new Date());
+
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+}
+
+function getWeekEnd(weekStart) {
+    const end = new Date(weekStart);
+    end.setDate(end.getDate() + 6);
+    return end;
+}
 
 // Load reminders
 async function loadReminders() {
@@ -36,15 +50,12 @@ async function summarizeUrl(url) {
         const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
         const html = await response.text();
         
-        // Extract title
         const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
         const title = titleMatch ? titleMatch[1].trim() : '';
         
-        // Extract meta description
         const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i);
         const description = descMatch ? descMatch[1].trim() : '';
         
-        // Extract og:image for thumbnail
         const ogImageMatch = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
         const image = ogImageMatch ? ogImageMatch[1].trim() : '';
         
@@ -71,7 +82,6 @@ async function addReminder(text, url = '', dateTime = '') {
         description: ''
     };
     
-    // Auto-summarize URL if provided
     if (url) {
         const summary = await summarizeUrl(url);
         reminder.title = summary.title || text.substring(0, 60);
@@ -111,8 +121,8 @@ function toggleDone(id) {
 
 function render() {
     renderCalendar();
-    renderRemindersWithDate();
-    renderReadLater();
+    renderWeeklyCalendar();
+    renderTaskList();
 }
 
 function renderCalendar() {
@@ -132,17 +142,15 @@ function renderCalendar() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const showPending = document.getElementById('showOnlyPending').checked;
+    const showPending = document.getElementById('showOnlyPending')?.checked ?? true;
     
     let html = '';
     
-    // Previous month days
     const prevMonth = new Date(year, month, 0);
     for (let i = startDay - 1; i >= 0; i--) {
         html += `<div class="calendar-day other-month"><span class="day-number">${prevMonth.getDate() - i}</span></div>`;
     }
     
-    // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dateStr = date.toISOString().split('T')[0];
@@ -169,7 +177,6 @@ function renderCalendar() {
         </div>`;
     }
     
-    // Next month days
     const totalCells = startDay + daysInMonth;
     const remaining = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
     for (let day = 1; day <= remaining; day++) {
@@ -179,95 +186,160 @@ function renderCalendar() {
     document.getElementById('calendarDays').innerHTML = html;
 }
 
-function renderRemindersWithDate() {
-    const showPending = document.getElementById('showOnlyPending').checked;
+function renderWeeklyCalendar() {
+    const weekEnd = getWeekEnd(currentWeekStart);
+    const dayNames = ['Po', 'Ut', 'St', 'Ct', 'Pa', 'So', 'Ne'];
+    
+    const startDay = currentWeekStart.getDate();
+    const startMonth = currentWeekStart.toLocaleDateString('cs-CZ', { month: 'short' });
+    const endDay = weekEnd.getDate();
+    const endMonth = weekEnd.toLocaleDateString('cs-CZ', { month: 'short' });
+    
+    const weekRangeText = `${startDay}. ${startMonth} - ${endDay}. ${endMonth}`;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const showPending = document.getElementById('showOnlyPending')?.checked ?? true;
+    
+    let weekHeaderHtml = '';
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(currentWeekStart);
+        date.setDate(date.getDate() + i);
+        
+        const isToday = date.getTime() === today.getTime();
+        const dayNumber = date.getDate();
+        
+        weekHeaderHtml += `
+            <div class="week-day-header ${isToday ? 'today-col' : ''}">
+                <div class="day-name">${dayNames[i]}</div>
+                <div class="day-number">${dayNumber}</div>
+            </div>
+        `;
+    }
+    
+    const hours = [];
+    for (let h = 6; h <= 22; h++) {
+        hours.push(h);
+    }
+    
+    let dayColumnsHtml = '';
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(currentWeekStart);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const dayReminders = reminders.filter(r => {
+            if (!r.dateTime) return false;
+            if (showPending && r.done) return false;
+            return r.dateTime.split('T')[0] === dateStr;
+        });
+        
+        let eventsHtml = '';
+        dayReminders.forEach(r => {
+            const time = new Date(r.dateTime);
+            const hour = time.getHours();
+            const minute = time.getMinutes();
+            const topPercent = ((hour - 6) * 40) + (minute / 60 * 40);
+            
+            const timeStr = time.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+            
+            eventsHtml += `
+                <div class="week-event ${r.done ? 'done' : ''}" 
+                     style="top: ${topPercent}px; height: 36px;"
+                     onclick="toggleDone(${r.id})" title="${escapeHtml(r.text)}">
+                    <div class="event-time">${timeStr}</div>
+                    <div class="event-title">${escapeHtml(r.title || r.text)}</div>
+                </div>
+            `;
+        });
+        
+        let hourCellsHtml = '';
+        hours.forEach(h => {
+            hourCellsHtml += `<div class="hour-cell"></div>`;
+        });
+        
+        dayColumnsHtml += `
+            <div class="day-column" data-date="${dateStr}">
+                ${hourCellsHtml}
+                ${eventsHtml}
+            </div>
+        `;
+    }
+    
+    let timeGutterHtml = '';
+    hours.forEach(h => {
+        timeGutterHtml += `<div class="time-slot-label">${h}</div>`;
+    });
+    
+    document.getElementById('weekHeader').innerHTML = `
+        <div class="time-gutter"></div>
+        ${weekHeaderHtml}
+    `;
+    
+    document.getElementById('weekBody').innerHTML = `
+        <div class="time-gutter">${timeGutterHtml}</div>
+        ${dayColumnsHtml}
+    `;
+    
+    document.getElementById('weekRangeLabel').textContent = weekRangeText;
+}
+
+function renderTaskList() {
+    const showPending = document.getElementById('showOnlyPending')?.checked ?? true;
     
     let filtered = reminders.filter(r => r.dateTime);
     if (showPending) {
         filtered = filtered.filter(r => !r.done);
     }
     
-    filtered.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-    
     if (filtered.length === 0) {
-        document.getElementById('remindersList').innerHTML = `
+        document.getElementById('tasksList').innerHTML = `
             <div class="empty-state">
-                <h3>Zadne ulohy</h3>
+                <h3>Zadne ukoly</h3>
             </div>
         `;
         return;
     }
     
-    const html = filtered.map(r => createReminderCard(r)).join('');
-    document.getElementById('remindersList').innerHTML = `<div class="column-content">${html}</div>`;
-}
-
-function renderReadLater() {
-    const showPending = document.getElementById('showOnlyPending').checked;
+    const iconCalendar = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+    const iconLink = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+    const iconCheck = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+    const iconTrash = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
     
-    let filtered = reminders.filter(r => !r.dateTime);
-    if (showPending) {
-        filtered = filtered.filter(r => !r.done);
-    }
-    
-    filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    if (filtered.length === 0) {
-        document.getElementById('readLaterList').innerHTML = `
-            <div class="empty-state">
-                <h3>Nic k precteni</h3>
-            </div>
-        `;
-        return;
-    }
-    
-    const html = filtered.map(r => createReminderCard(r)).join('');
-    document.getElementById('readLaterList').innerHTML = `<div class="column-content">${html}</div>`;
-}
-
-function createReminderCard(r) {
-    const hasDate = r.dateTime;
-    let dateStr = '';
-    let timeStr = '';
-    
-    if (hasDate) {
+    const html = filtered.map(r => {
         const date = new Date(r.dateTime);
-        dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
-        timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-    }
-    
-    const displayTitle = r.title || escapeHtml(r.text);
-    const displayExcerpt = r.description ? `<div class="reminder-excerpt">${escapeHtml(r.description)}</div>` : '';
-    
-    const iconCalendar = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
-    const iconLink = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
-    const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
-    const iconTrash = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
-    
-    return `
-        <div class="reminder-card ${r.done ? 'done' : ''}">
-            <div class="reminder-header">
-                <div class="reminder-text">${escapeHtml(displayTitle)}</div>
-                <div class="reminder-actions">
-                    <button class="btn-done" onclick="toggleDone(${r.id})" title="${r.done ? 'Obnovit' : 'Hotovo'}">
-                        ${iconCheck}
-                    </button>
-                    <button class="btn-delete" onclick="deleteReminder(${r.id})" title="Smazat">
-                        ${iconTrash}
-                    </button>
+        const dateStr = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+        const timeStr = date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+        
+        return `
+            <div class="task-card ${r.done ? 'done' : ''}">
+                <div class="task-header">
+                    <div class="task-text">${escapeHtml(r.title || r.text)}</div>
+                    <div class="task-actions">
+                        <button class="btn-done" onclick="toggleDone(${r.id})" title="${r.done ? 'Obnovit' : 'Hotovo'}">
+                            ${iconCheck}
+                        </button>
+                        <button class="btn-delete" onclick="deleteReminder(${r.id})" title="Smazat">
+                            ${iconTrash}
+                        </button>
+                    </div>
+                </div>
+                <div class="task-meta">
+                    <span class="task-date">${iconCalendar} ${dateStr} ${timeStr}</span>
+                    ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="task-url">${iconLink} Odkaz</a>` : ''}
                 </div>
             </div>
-            ${displayExcerpt}
-            <div class="reminder-meta">
-                ${hasDate ? `<span class="reminder-date">${iconCalendar} ${dateStr} ${timeStr}</span>` : ''}
-                ${r.url ? `<a href="${escapeHtml(r.url)}" target="_blank" class="reminder-url">${iconLink} Odkaz</a>` : ''}
-            </div>
-        </div>
-    `;
+        `;
+    }).join('');
+    
+    document.getElementById('tasksList').innerHTML = `<div class="column-content">${html}</div>`;
 }
 
 function showDayReminders(dateStr) {
-    renderRemindersWithDate();
+    const date = new Date(dateStr);
+    currentWeekStart = getWeekStart(date);
+    render();
 }
 
 function escapeHtml(text) {
@@ -307,6 +379,16 @@ document.getElementById('nextMonth').addEventListener('click', () => {
     renderCalendar();
 });
 
+document.getElementById('prevWeek').addEventListener('click', () => {
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    render();
+});
+
+document.getElementById('nextWeek').addEventListener('click', () => {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    render();
+});
+
 document.getElementById('showOnlyPending').addEventListener('change', render);
 
 document.getElementById('addForm').addEventListener('submit', async (e) => {
@@ -322,7 +404,6 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
     }
 });
 
-// Keyboard shortcut to close modal
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modal.classList.contains('active')) {
         modal.classList.remove('active');
