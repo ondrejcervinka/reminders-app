@@ -42,19 +42,24 @@ function escapeHtml(text) {
 
 // ── Data ──
 async function loadReminders() {
+    // localStorage is the primary store — use JSON only as seed on first visit
+    const stored = localStorage.getItem('reminders_v2');
+    if (stored) {
+        reminders = JSON.parse(stored);
+        render();
+        return;
+    }
+
+    // First visit: seed from the git JSON
     try {
         const response = await fetch('data/reminders.json');
         if (response.ok) {
             reminders = await response.json();
             saveReminders();
-            render();
-            return;
         }
     } catch (e) {
-        console.log('Could not load from git, trying localStorage');
+        console.log('Could not load seed data from JSON');
     }
-    const stored = localStorage.getItem('reminders_v2');
-    if (stored) reminders = JSON.parse(stored);
     render();
 }
 
