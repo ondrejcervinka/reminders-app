@@ -7,7 +7,7 @@ async function loadReminders() {
     let loadedFromServer = false;
     
     try {
-        const response = await fetch('reminders.json');
+        const response = await fetch('data/reminders.json');
         if (response.ok) {
             reminders = await response.json();
             loadedFromServer = true;

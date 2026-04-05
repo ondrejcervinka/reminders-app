@@ -2,6 +2,17 @@
 
 Jednoduchá webová aplikace pro správu reminderů.
 
+## Struktura
+
+```
+├── index.html          # Hlavní stránka
+├── app.js              # Aplikační logika
+├── style.css           # Styly
+├── data/
+│   └── reminders.json  # Data (Git-verzovaná)
+└── README.md
+```
+
 ## Funkce
 
 - 📅 **Kalendářní pohled** - vizuální přehled reminderů po dnech
@@ -13,8 +24,8 @@ Jednoduchá webová aplikace pro správu reminderů.
 ## Tech Stack
 
 - Vanilla HTML/CSS/JS
-- Data ukládána v `reminders.json`
-- Lokální storage pro demo (lze rozšířit o GitHub API sync)
+- Data oddělená v `data/reminders.json`
+- Lokální storage jako fallback
 
 ## Nastavení GitHub Pages
 
@@ -22,17 +33,18 @@ Jednoduchá webová aplikace pro správu reminderů.
 2. Nastav GitHub Pages na `main` branch
 3. Aplikace bude dostupná na: `https://ondrejcervinka.github.io/reminders-app/`
 
-## Synchronizace s cron jobs
-
-Pro automatickou synchronizaci s OpenClaw cron jobs:
-
-```bash
-# Přidej do crontab - webhook nebo GitHub Action
-# TODO: Implementovat GitHub Action workflow
-```
-
 ## Lokální vývoj
 
-Jednoduše otevři `index.html` v prohlížeči.
+```bash
+# Servírování přes HTTP (pro CORS na fetch)
+python3 -m http.server 8000
 
-Pro práci s JSON soubory doporučuji použít `python3 -m http.server 8000`.
+# Otevři http://localhost:8000
+```
+
+## Development workflow
+
+1. Vytvoř branch: `git checkout -b feature/nove-uxe`
+2. Uprav kód nebo data
+3. Commitni a pushni: `git push origin feature/nove-uxe`
+4. Merge do main → automatický rebuild na GitHub Pages
