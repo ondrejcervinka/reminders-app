@@ -16,25 +16,25 @@ function getWeekEnd(weekStart) {
     return end;
 }
 
-// Load reminders
+// Load reminders - git JSON is source of truth
 async function loadReminders() {
-    let loadedFromServer = false;
-    
+    // Always load from git JSON first - that's our source of truth
     try {
         const response = await fetch('data/reminders.json');
         if (response.ok) {
             reminders = await response.json();
-            loadedFromServer = true;
+            saveReminders(); // Update localStorage with git data
+            render();
+            return;
         }
     } catch (e) {
-        console.log('Using localStorage');
+        console.log('Could not load from git, trying localStorage');
     }
     
-    if (!loadedFromServer) {
-        const stored = localStorage.getItem('reminders_v2');
-        if (stored) {
-            reminders = JSON.parse(stored);
-        }
+    // Fallback to localStorage only if git fetch fails
+    const stored = localStorage.getItem('reminders_v2');
+    if (stored) {
+        reminders = JSON.parse(stored);
     }
     
     render();
