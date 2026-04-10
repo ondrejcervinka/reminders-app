@@ -166,5 +166,13 @@
     "dateTime": "",
     "done": false,
     "createdAt": "2026-04-10T06:22:00Z"
+  },
+  {
+    "id": 1000000014,
+    "text": "awesome-openclaw-usecases - community collection of OpenClaw use cases",
+    "url": "https://github.com/hesamsheikh/awesome-openclaw-usecases",
+    "dateTime": "",
+    "done": false,
+    "createdAt": "2026-04-10T14:06:00Z"
   }
 ]
