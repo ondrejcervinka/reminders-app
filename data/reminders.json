@@ -174,5 +174,13 @@
     "dateTime": "",
     "done": false,
     "createdAt": "2026-04-10T14:06:00Z"
+  },
+  {
+    "id": 1000000015,
+    "text": "The OpenClaw Setup Guide (after Anthropic killed $200/mo Pro) - r/AskClaw",
+    "url": "https://www.reddit.com/r/AskClaw/comments/1sh151d/the_openclaw_setup_guide_after_anthropic_killed/",
+    "dateTime": "",
+    "done": false,
+    "createdAt": "2026-04-11T23:10:00Z"
   }
 ]
